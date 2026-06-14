@@ -6,7 +6,7 @@ import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-// ---------------------------------------- MOTHER BOT ----------------------------------------
+// ---------------------------------------- 母机器人命令 ----------------------------------------
 
 export async function motherBotCommands(botToken, ownerUid, message, childBotUrl, childBotSecretToken) {
   const sendRespMessage = async function (chat_id, text) {
@@ -26,38 +26,32 @@ export async function motherBotCommands(botToken, ownerUid, message, childBotUrl
         secret_token: childBotSecretToken
       })).json();
       if (setWebhookResp.ok) {
-        await sendRespMessage(message.chat.id, `bot ${childBotToken} install success!`);
+        await sendRespMessage(message.chat.id, `✅ 机器人 ${childBotToken} 安装成功！`);
       } else {
-        await sendRespMessage(message.chat.id, `bot ${childBotToken} install failed! ${JSON.stringify(setWebhookResp)}`);
+        await sendRespMessage(message.chat.id, `❌ 机器人 ${childBotToken} 安装失败！ ${JSON.stringify(setWebhookResp)}`);
       }
     } else if (message.text.startsWith("/uninstall ")) {
       const childBotToken = message.text.split("/uninstall ")[1];
       const deleteWebhookResp = await (await postToTelegramApi(childBotToken, 'deleteWebhook', {})).json();
       if (deleteWebhookResp.ok) {
-        await sendRespMessage(message.chat.id, `bot ${childBotToken} uninstall success!`);
+        await sendRespMessage(message.chat.id, `✅ 机器人 ${childBotToken} 卸载成功！`);
       } else {
-        await sendRespMessage(message.chat.id, `bot ${childBotToken} uninstall failed! ${JSON.stringify(deleteWebhookResp)}`);
+        await sendRespMessage(message.chat.id, `❌ 机器人 ${childBotToken} 卸载失败！ ${JSON.stringify(deleteWebhookResp)}`);
       }
     } else {
       await postToTelegramApi(botToken, 'sendMessage', {
         chat_id: message.chat.id,
-        text: `Has no this command! Try '/install {{botToken}}' OR '/uninstall {{botToken}}'`,
+        text: `❓ 没有这个命令！试试 '/install {{机器人Token}}' 或 '/uninstall {{机器人Token}}'`,
       });
     }
     return new Response('OK');
   } catch (error) {
-    console.error('Error handling webhook:', error.message);
-    // --- for debugging ---
-    // await postToTelegramApi(botToken, 'sendMessage', {
-    //     chat_id: ownerUid,
-    //     text: `Error handling webhook: ${error.message}`,
-    // });
-    // --- for debugging ---
+    console.error('处理 Webhook 时出错：', error.message);
     return new Response('OK');
   }
 }
 
-// ---------------------------------------- SETTINGS ----------------------------------------
+// ---------------------------------------- 设置 ----------------------------------------
 
 export async function init(botToken, ownerUid, message) {
   try {
@@ -65,7 +59,7 @@ export async function init(botToken, ownerUid, message) {
     const metaDataMessage = supergroupId.toString();
 
     let failed = false;
-    let failedMessage = "init failed, please try again";
+    let failedMessage = "初始化失败，请重试。";
     let sendMetaDataMessageResp;
     let pinMetaDataMessageResp;
 
@@ -73,7 +67,7 @@ export async function init(botToken, ownerUid, message) {
     if (!check.failed) {
       await postToTelegramApi(botToken, 'sendMessage', {
         chat_id: ownerUid,
-        text: "already init!",
+        text: "✅ 已经初始化过了！",
       });
       return new Response('OK');
     }
@@ -98,13 +92,7 @@ export async function init(botToken, ownerUid, message) {
     }
     return checkInit(botToken, ownerUid, message, failed, failedMessage);
   } catch (error) {
-    console.error('Error handling webhook:', error.message);
-    // // --- for debugging ---
-    // await postToTelegramApi(botToken, 'sendMessage', {
-    //     chat_id: ownerUid,
-    //     text: `Error handling webhook: ${error.message}`,
-    // });
-    // // --- for debugging ---
+    console.error('处理 Webhook 时出错：', error.message);
     return new Response('OK');
   }
 }
@@ -114,7 +102,7 @@ export async function checkInit(botToken, ownerUid, message, failed, failedMessa
     const supergroupId = message.chat.id;
 
     failed = failed || false;
-    failedMessage = failedMessage || "init check failed, please do init or try again";
+    failedMessage = failedMessage || "初始化检查失败，请执行初始化或重试。";
     let checkMetaDataMessageResp;
     if (!failed) {
       const doCheckInitRet = await doCheckInit(botToken, ownerUid, failedMessage, failed);
@@ -125,7 +113,7 @@ export async function checkInit(botToken, ownerUid, message, failed, failedMessa
     if (failed) {
       await postToTelegramApi(botToken, 'sendMessage', {
         chat_id: ownerUid,
-        text: `GROUP ${supergroupId}: ${failedMessage}`,
+        text: `群组 ${supergroupId}：${failedMessage}`,
       });
     } else {
       const { superGroupChatId: superGroupIdFromMetaDataMessage }
@@ -133,24 +121,18 @@ export async function checkInit(botToken, ownerUid, message, failed, failedMessa
       if (superGroupIdFromMetaDataMessage !== supergroupId) {
         await postToTelegramApi(botToken, 'sendMessage', {
           chat_id: ownerUid,
-          text: `GROUP ${supergroupId}: init failed! Cause already init GROUP ${superGroupIdFromMetaDataMessage}`,
+          text: `群组 ${supergroupId}：初始化失败！原因：已初始化的群组是 ${superGroupIdFromMetaDataMessage}`,
         });
       } else {
         await postToTelegramApi(botToken, 'sendMessage', {
           chat_id: ownerUid,
-          text: `GROUP ${supergroupId}: init success!`,
+          text: `群组 ${supergroupId}：初始化成功！`,
         });
       }
     }
     return new Response('OK');
   } catch (error) {
-    console.error('Error handling webhook:', error.message);
-    // // --- for debugging ---
-    // await postToTelegramApi(botToken, 'sendMessage', {
-    //     chat_id: ownerUid,
-    //     text: `Error handling webhook: ${error.message}`,
-    // });
-    // // --- for debugging ---
+    console.error('处理 Webhook 时出错：', error.message);
     return new Response('OK');
   }
 }
@@ -234,7 +216,7 @@ async function cleanItemOnMetaData(botToken, metaDataMessage, ownerUid, topicId)
 }
 
 async function editMetaDataMessage(botToken, ownerUid, metaDataMessage, newText) {
-  // TODO: 2025/5/10 MAX LENGTH 4096
+  // TODO: 2025/5/10 最大长度 4096
   const editMessageTextResp = await (await postToTelegramApi(botToken, 'editMessageText', {
     chat_id: ownerUid,
     message_id: metaDataMessage.message_id,
@@ -295,41 +277,35 @@ export async function reset(botToken, ownerUid, message, inOwnerChat) {
         if (!unpinMetaDataMessageResp.ok) {
           await postToTelegramApi(botToken, 'sendMessage', {
             chat_id: ownerUid,
-            text: `Reset failed!`,
+            text: `重置失败！`,
           });
         } else {
           await postToTelegramApi(botToken, 'sendMessage', {
             chat_id: ownerUid,
-            text: `Reset success!`,
+            text: `重置成功！`,
           });
         }
       } else {
         await postToTelegramApi(botToken, 'sendMessage', {
           chat_id: ownerUid,
-          text: `Can't reset from group isn't current using!`,
+          text: `无法从此群组重置，因为这不是当前使用的群组！`,
         });
       }
       return new Response('OK');
     } else {
       await postToTelegramApi(botToken, 'sendMessage', {
         chat_id: ownerUid,
-        text: "not init yet!",
+        text: "尚未初始化！",
       });
       return new Response('OK');
     }
   } catch (error) {
-    console.error('Error handling webhook:', error.message);
-    // // --- for debugging ---
-    // await postToTelegramApi(botToken, 'sendMessage', {
-    //     chat_id: ownerUid,
-    //     text: `Error handling webhook: ${error.message}`,
-    // });
-    // // --- for debugging ---
+    console.error('处理 Webhook 时出错：', error.message);
     return new Response('OK');
   }
 }
 
-// ---------------------------------------- PRIVATE MESSAGE ----------------------------------------
+// ---------------------------------------- 私聊消息 ----------------------------------------
 
 function parseMdReserveWord(str) {
   return str
@@ -392,7 +368,7 @@ export async function processPMReceived(botToken, ownerUid, message, superGroupC
     if (!createTopicResp.ok || !topicId) {
       await postToTelegramApi(botToken, 'sendMessage', {
         chat_id: ownerUid,
-        text: `DEBUG MESSAGE! chatId: ${superGroupChatId} topicName: ${topicName} createTopicResp: ${JSON.stringify(createTopicResp)}`,
+        text: `调试信息！ chatId: ${superGroupChatId} topicName: ${topicName} createTopicResp: ${JSON.stringify(createTopicResp)}`,
       });
       return;
     }
@@ -409,20 +385,20 @@ export async function processPMReceived(botToken, ownerUid, message, superGroupC
     return reopenForumTopicResp.ok || !reopenForumTopicResp.description.includes("TOPIC_ID_INVALID");
   })()
 
-  // topic has been banned
+  // 话题已被封禁
   if (bannedTopics.includes(topicId) && isTopicExists) {
     return { success: false }
   }
 
   if (!isTopicExists) {
-    // clean metadata message
+    // 清理元数据消息
     await cleanItemOnMetaData(botToken, metaDataMessage, ownerUid, topicId);
     fromChatToTopic.delete(fromChatId)
-    // resend the message
+    // 重发消息
     return await processPMReceived(botToken, ownerUid, message, superGroupChatId, fromChatToTopic, bannedTopics, metaDataMessage, fromChatToCommentName)
   }
 
-  // forwardMessage to topic
+  // 转发消息到话题
   const forwardMessageResp = await (await postToTelegramApi(botToken, 'forwardMessage', {
     chat_id: superGroupChatId,
     message_thread_id: topicId,
@@ -433,12 +409,12 @@ export async function processPMReceived(botToken, ownerUid, message, superGroupC
   if (forwardMessageResp.ok) {
     const topicMessageId = forwardMessageResp.result.message_id;
 
-    // replay
+    // 回复处理
     const replayPmMsgId = message.reply_to_message?.message_id
     if (replayPmMsgId) {
       const checkMessageConnectionMetaDataResp =
           await checkMessageConnectionMetaDataForAction(botToken, superGroupChatId,
-              `Can't find ORIGIN message for message EDITING.`, ownerUid);
+              `无法找到用于消息编辑的原始消息。`, ownerUid);
       let replayedMessageId;
       const messageConnectionTextSplit = checkMessageConnectionMetaDataResp.metaDataMessageText?.split(';');
       if (messageConnectionTextSplit) {
@@ -457,7 +433,7 @@ export async function processPMReceived(botToken, ownerUid, message, superGroupC
       if (superGroupChatId.toString().startsWith("-100")) {
         newMessageLink = `https://t.me/c/${superGroupChatId.toString().substring(4)}/${topicId}/${topicMessageId}`;
       }
-      let text = `*⬆️⬆️⬆️[REPLAY](${newMessageLink})⬆️⬆️⬆️*`;
+      let text = `*⬆️⬆️⬆️[回复](${newMessageLink})⬆️⬆️⬆️*`;
       const sendReplayMessageBody = {
         chat_id: superGroupChatId,
         message_thread_id: topicId,
@@ -475,8 +451,8 @@ export async function processPMReceived(botToken, ownerUid, message, superGroupC
       if (!sendMessageResp || !sendMessageResp?.ok) {
         delete sendReplayMessageBody.reply_parameters;
         const isReplaySender = message.reply_to_message?.from.id === fromUserId;
-        sendReplayMessageBody.text = `*⬆️⬆️⬆️[REPLAY](${newMessageLink})`;
-        sendReplayMessageBody.text += isReplaySender ? ` MINE⬇️⬇️⬇️*` : ` YOURS⬇️⬇️⬇️*`;
+        sendReplayMessageBody.text = `*⬆️⬆️⬆️[回复](${newMessageLink})`;
+        sendReplayMessageBody.text += isReplaySender ? ` 我的⬇️⬇️⬇️*` : ` 你的⬇️⬇️⬇️*`;
         if (message.reply_to_message?.date) {
           const formatted = dayjs.unix(message.reply_to_message?.date)
               .tz('Asia/Shanghai')
@@ -490,24 +466,24 @@ export async function processPMReceived(botToken, ownerUid, message, superGroupC
               .replace(/`/g, '\\`');
           sendReplayMessageBody.text += `\n\`\`\``;
         } else {
-          sendReplayMessageBody.text += `\n*❎❎❎UNKNOWN❎❎❎*`;
+          sendReplayMessageBody.text += `\n*❎❎❎未知❎❎❎*`;
         }
         await postToTelegramApi(botToken, 'sendMessage', sendReplayMessageBody)
       }
     }
 
     if (isNewTopic) {
-      // send PM to bot owner for the bad notification on super group for first message
+      // 向机器人主人发送新私聊通知（因为超级群组第一条消息不会有通知）
       let messageLink = `https://t.me/c/${superGroupChatId}/${topicId}/${topicMessageId}`;
       if (superGroupChatId.toString().startsWith("-100")) {
         messageLink = `https://t.me/c/${superGroupChatId.toString().substring(4)}/${topicId}/${topicMessageId}`
       }
       const parsedFromChatName = parseMdReserveWord(fromChatName)
       const text = `${messageLink
-          ? `New PM chat from ${parsedFromChatName}` +
-          `\n[Click the to view it in your SUPERGROUP](${messageLink})`
-          : `New PM chat from ${parsedFromChatName}` +
-          `\nGo view it in your SUPERGROUP`}`
+          ? `来自 ${parsedFromChatName} 的新私聊` +
+          `\n[点击在超级群组中查看](${messageLink})`
+          : `来自 ${parsedFromChatName} 的新私聊` +
+          `\n请前往超级群组查看`}`
       const sendMessageResp = await (await postToTelegramApi(botToken, 'sendMessage', {
         chat_id: ownerUid,
         text: text,
@@ -517,13 +493,13 @@ export async function processPMReceived(botToken, ownerUid, message, superGroupC
       if (!sendMessageResp.ok) {
         await postToTelegramApi(botToken, 'sendMessage', {
           chat_id: ownerUid,
-          text: `New PM chat notify error, text: ${text} resp: ${JSON.stringify(sendMessageResp)}`,
+          text: `新私聊通知出错，文本：${text} 响应：${JSON.stringify(sendMessageResp)}`,
         })
       }
     }
-    // save messageId connection to superGroupChat pin message
+    // 保存消息 ID 关系到超级群组置顶消息
     await saveMessageConnection(botToken, superGroupChatId, topicId, topicMessageId, pmMessageId, ownerUid);
-    // notify sending status by MessageReaction
+    // 通过消息反应通知发送状态
     await postToTelegramApi(botToken, 'setMessageReaction', {
       chat_id: fromChatId,
       message_id: pmMessageId,
@@ -538,10 +514,10 @@ export async function processPMReceived(botToken, ownerUid, message, superGroupC
       newMessageId: topicMessageId
     }
   } else if (forwardMessageResp.description.includes('message thread not found')) {
-    // clean metadata message
+    // 清理元数据消息
     await cleanItemOnMetaData(botToken, metaDataMessage, ownerUid, topicId);
     fromChatToTopic.delete(fromChatId)
-    // resend the message
+    // 重发消息
     return await processPMReceived(botToken, ownerUid, message, superGroupChatId, fromChatToTopic, bannedTopics, metaDataMessage, fromChatToCommentName)
   }
   return { success: false }
@@ -554,14 +530,14 @@ export async function processPMSent(botToken, message, topicToFromChat, noReplay
   const topicMessageId = message.message_id;
   const pmChatId = topicToFromChat.get(message.message_thread_id)
 
-  // replay
+  // 回复处理
   let replayPmMessageId;
   let replayText;
   if (!noReplay && message.reply_to_message && message.reply_to_message?.message_id !== topicId) {
     replayText = message.reply_to_message?.text;
     const checkMessageConnectionMetaDataResp =
         await checkMessageConnectionMetaDataForAction(botToken, superGroupChatId,
-            `Can't find TARGET message for sending message REPLAY.`, ownerUid);
+            `无法找到用于发送回复的目标消息。`, ownerUid);
     if (!checkMessageConnectionMetaDataResp.failed) {
       const messageConnectionTextSplit = checkMessageConnectionMetaDataResp.metaDataMessageText.split(';').reverse();
       for (let i = 0; i < messageConnectionTextSplit.length; i++) {
@@ -590,13 +566,13 @@ export async function processPMSent(botToken, message, topicToFromChat, noReplay
   const copyMessageResp = await (await postToTelegramApi(botToken, 'copyMessage', copyMessageBody)).json();
   if (copyMessageResp.ok) {
     const pmMessageId = copyMessageResp.result.message_id
-    // save messageId connection to group pin message
+    // 保存消息 ID 关系到群组置顶消息
     await saveMessageConnection(botToken, superGroupChatId, topicId, topicMessageId, pmMessageId, ownerUid);
-    // send replay message
+    // 发送回复消息
     if (!replayPmMessageId && replayText) {
-      let sendReplayText = `*⬆️⬆️⬆️REPLAY`;
+      let sendReplayText = `*⬆️⬆️⬆️回复`;
       const isReplaySender = message.reply_to_message?.from.id === ownerUid;
-      sendReplayText += isReplaySender ? ` MINE⬇️⬇️⬇️*` : ` YOURS⬇️⬇️⬇️*`;
+      sendReplayText += isReplaySender ? ` 我的⬇️⬇️⬇️*` : ` 你的⬇️⬇️⬇️*`;
       if (message.reply_to_message?.date) {
         const formatted = dayjs.unix(message.reply_to_message?.date)
             .tz('Asia/Shanghai')
@@ -614,7 +590,7 @@ export async function processPMSent(botToken, message, topicToFromChat, noReplay
         link_preview_options: { is_disabled: true },
       })
     }
-    // notify sending status by MessageReaction
+    // 通过消息反应通知发送状态
     await postToTelegramApi(botToken, 'setMessageReaction', {
       chat_id: superGroupChatId,
       message_id: topicMessageId,
@@ -625,12 +601,12 @@ export async function processPMSent(botToken, message, topicToFromChat, noReplay
   } else {
     await postToTelegramApi(botToken, 'sendMessage', {
       chat_id: ownerUid,
-      text: `SEND MESSAGE ERROR! copyMessageResp: ${JSON.stringify(copyMessageResp)} message: ${JSON.stringify(message)}`,
+      text: `发送消息出错！ copyMessageResp: ${JSON.stringify(copyMessageResp)} 消息：${JSON.stringify(message)}`,
     });
   }
 }
 
-// ---------------------------------------- MESSAGE CONNECTION ----------------------------------------
+// ---------------------------------------- 消息关联 ----------------------------------------
 
 async function checkMessageConnectionMetaData(botToken, superGroupChatId, failedMessage, failed) {
   let metaDataMessageId;
@@ -666,7 +642,7 @@ async function checkMessageConnectionMetaDataForAction(botToken, superGroupChatI
 
 async function saveMessageConnection(botToken, superGroupChatId, topicId, topicMessageId, pmMessageId, ownerUid) {
   let failed = false;
-  let failedMessage = "Chat message connect failed, can't do emoji react, edit, delete.";
+  let failedMessage = "消息关联失败，无法进行表情反应、编辑、删除。";
   const checkMessageConnectionMetaDataResp = await checkMessageConnectionMetaData(
       botToken, superGroupChatId, failedMessage, failed);
   failedMessage = checkMessageConnectionMetaDataResp.failedMessage;
@@ -674,7 +650,7 @@ async function saveMessageConnection(botToken, superGroupChatId, topicId, topicM
   let metaDataMessageId = checkMessageConnectionMetaDataResp.metaDataMessageId;
   let metaDataMessageText = checkMessageConnectionMetaDataResp.metaDataMessageText;
   if (failed) {
-    // new message connection in superGroupChat pinned message
+    // 在超级群组置顶消息中新建消息关联
     failed = false;
     metaDataMessageText = `${topicId}-${topicMessageId}:${pmMessageId}`;
     const sendMetaDataMessageResp = await (await postToTelegramApi(botToken, 'sendMessage', {
@@ -697,9 +673,9 @@ async function saveMessageConnection(botToken, superGroupChatId, topicId, topicM
       }
     }
   } else {
-    // add message connection in superGroupChat pinned message
+    // 在超级群组置顶消息中添加消息关联
     metaDataMessageText = `${metaDataMessageText};${topicId}-${topicMessageId}:${pmMessageId}`;
-    // text message max length 4096
+    // 文本消息最大长度 4096
     const processForTextMessageMaxLength = function (text, process) {
       if (text.length > 4096) {
         text = process(text);
@@ -722,12 +698,12 @@ async function saveMessageConnection(botToken, superGroupChatId, topicId, topicM
   if (failed) {
     await postToTelegramApi(botToken, 'sendMessage', {
       chat_id: ownerUid,
-      text: `GROUP ${superGroupChatId} MESSAGE ${topicId}-${topicMessageId}:${pmMessageId}: ${failedMessage}`,
+      text: `群组 ${superGroupChatId} 消息 ${topicId}-${topicMessageId}:${pmMessageId}：${failedMessage}`,
     });
   }
 }
 
-// ---------------------------------------- EMOJI REACTION ----------------------------------------
+// ---------------------------------------- 表情反应 ----------------------------------------
 
 export async function processERReceived(botToken, ownerUid, fromUser, messageReaction, superGroupChatId, bannedTopics) {
   const pmMessageId = messageReaction.message_id;
@@ -736,7 +712,7 @@ export async function processERReceived(botToken, ownerUid, fromUser, messageRea
   let reaction = messageReaction.new_reaction;
 
   const checkMessageConnectionMetaDataResp =
-      await checkMessageConnectionMetaDataForAction(botToken, superGroupChatId, "Can't sent EMOJI REACTION.", ownerUid);
+      await checkMessageConnectionMetaDataForAction(botToken, superGroupChatId, "无法发送表情反应。", ownerUid);
   if (checkMessageConnectionMetaDataResp.failed) return;
 
   const messageConnectionTextSplit = checkMessageConnectionMetaDataResp.metaDataMessageText.split(';').reverse();
@@ -779,7 +755,7 @@ export async function processERSent(botToken, messageReaction, topicToFromChat) 
   let reaction = messageReaction.new_reaction;
 
   const checkMessageConnectionMetaDataResp =
-      await checkMessageConnectionMetaDataForAction(botToken, superGroupChatId, "Can't sent EMOJI REACTION.", ownerUid);
+      await checkMessageConnectionMetaDataForAction(botToken, superGroupChatId, "无法发送表情反应。", ownerUid);
   if (checkMessageConnectionMetaDataResp.failed) return;
 
   const messageConnectionTextSplit = checkMessageConnectionMetaDataResp.metaDataMessageText.split(';').reverse();
@@ -799,7 +775,7 @@ export async function processERSent(botToken, messageReaction, topicToFromChat) 
     return;
   }
 
-  // TODO: 2025/5/10 if react on owner's message, there's no need for a 🕊
+  // TODO: 2025/5/10 如果是对主人自己的消息反应，则不需要 🕊
   if (reaction.length === 0) {
     reaction = [
       {
@@ -827,17 +803,16 @@ async function sendEmojiReaction(botToken, targetChatId, targetMessageId, reacti
       });
     } else if (setMessageReactionResp.description.includes('REACTION_INVALID')) {
     } else {
-      // --- for debugging ---
+      // 调试用，暂时注释
       // await postToTelegramApi(botToken, 'sendMessage', {
       //   chat_id: ownerUid,
       //   text: `setMessageReactionResp : ${JSON.stringify(setMessageReactionResp)}`,
       // });
-      // --- for debugging ---
     }
   }
 }
 
-// ---------------------------------------- EDIT MESSAGE ----------------------------------------
+// ---------------------------------------- 编辑消息 ----------------------------------------
 
 export async function processPMEditReceived(botToken, ownerUid, message, superGroupChatId, fromChatToTopic, bannedTopics, metaDataMessage, fromChatToCommentName) {
   const { success: isForwardSuccess, targetChatId, targetTopicId, originChatId, originMessageId, newMessageId } =
@@ -845,7 +820,7 @@ export async function processPMEditReceived(botToken, ownerUid, message, superGr
   if (isForwardSuccess) {
     const checkMessageConnectionMetaDataResp =
         await checkMessageConnectionMetaDataForAction(botToken, superGroupChatId,
-            `Can't find ORIGIN message for message EDITING.`, ownerUid);
+            `无法找到用于编辑消息的原始消息。`, ownerUid);
 
     let newMessageLink = `https://t.me/c/${targetChatId}/${targetTopicId}/${newMessageId}`;
     if (targetChatId.toString().startsWith("-100")) {
@@ -873,9 +848,9 @@ export async function processPMEditReceived(botToken, ownerUid, message, superGr
 
     let text = `⬆️⬆️⬆️⬆️⬆️⬆️`;
     if (oldMessageLink) {
-      text += `\n*[Message](${newMessageLink}) edited from [MESSAGE](${oldMessageLink})*`;
+      text += `\n*[消息](${newMessageLink}) 已从 [消息](${oldMessageLink}) 编辑*`;
     } else {
-      text += `\n*[Message](${newMessageLink}) edited from unknown*`;
+      text += `\n*[消息](${newMessageLink}) 已编辑（原消息未知）*`;
     }
     await postToTelegramApi(botToken, 'sendMessage', {
       chat_id: targetChatId,
@@ -896,7 +871,7 @@ export async function processPMEditSent(botToken, message, superGroupChatId, top
 
   const checkMessageConnectionMetaDataResp =
       await checkMessageConnectionMetaDataForAction(botToken, superGroupChatId,
-          `Can't find TARGET message for sending message editing.`, ownerUid);
+          `无法找到用于发送编辑消息的目标消息。`, ownerUid);
   if (checkMessageConnectionMetaDataResp.failed) return;
 
   const messageConnectionTextSplit = checkMessageConnectionMetaDataResp.metaDataMessageText.split(';').reverse();
@@ -918,7 +893,7 @@ export async function processPMEditSent(botToken, message, superGroupChatId, top
     await postToTelegramApi(botToken, 'sendMessage', {
       chat_id: superGroupChatId,
       message_thread_id: topicId,
-      text: `Can't find TARGET message for sending [message](${oldMessageLink}) EDITING\\.`,
+      text: `无法找到用于发送[消息](${oldMessageLink})编辑的目标消息。`,
       parse_mode: "MarkdownV2",
     });
     return;
@@ -933,23 +908,23 @@ export async function processPMEditSent(botToken, message, superGroupChatId, top
       entities: message.entities,
     })).json();
     if (editMessageTextResp.ok) {
-      // notify sending status by MessageReaction
+      // 通过消息反应通知编辑状态
       await notifyMessageEditForward(botToken, superGroupChatId, topicMessageId);
     } else {
       await postToTelegramApi(botToken, 'sendMessage', {
         chat_id: ownerUid,
-        text: `SEND EDITED MESSAGE ERROR! editMessageTextResp: ${JSON.stringify(editMessageTextResp)} message: ${JSON.stringify(message)}.` +
-            `\nYou can send this to developer for getting help, or just delete this message.`,
+        text: `发送编辑消息出错！ editMessageTextResp: ${JSON.stringify(editMessageTextResp)} 消息：${JSON.stringify(message)}。` +
+            `\n你可以将此信息发送给开发者寻求帮助，或直接删除此消息。`,
       });
     }
   } else if (false) {
-    // TODO: 2025/5/10 editMessageCaption
+    // TODO: 2025/5/10 编辑消息标题
   } else if (false) {
-    // TODO: 2025/5/10 editMessageMedia
+    // TODO: 2025/5/10 编辑媒体
   } else if (false) {
-    // TODO: 2025/5/10 editMessageLiveLocation
+    // TODO: 2025/5/10 编辑实时位置
   } else if (false) {
-    // TODO: 2025/5/10 stopMessageLiveLocation
+    // TODO: 2025/5/10 停止实时位置
   }
 }
 
@@ -967,7 +942,7 @@ async function notifyMessageEditForward(botToken, fromChatId, fromMessageId) {
   });
 }
 
-// ---------------------------------------- DELETE MESSAGE ----------------------------------------
+// ---------------------------------------- 删除消息 ----------------------------------------
 
 export async function processPMDeleteReceived(botToken, ownerUid, message, reply,
                                               superGroupChatId, fromChatToTopic, bannedTopics, metaDataMessage) {
@@ -979,7 +954,7 @@ export async function processPMDeleteReceived(botToken, ownerUid, message, reply
 
   const checkMessageConnectionMetaDataResp =
       await checkMessageConnectionMetaDataForAction(botToken, superGroupChatId,
-          `Can't find ORIGIN message for message DELETING.`, ownerUid);
+          `无法找到用于删除消息的原始消息。`, ownerUid);
 
   let targetMessageId;
   const messageConnectionTextSplit = checkMessageConnectionMetaDataResp.metaDataMessageText?.split(';');
@@ -1005,8 +980,8 @@ export async function processPMDeleteReceived(botToken, ownerUid, message, reply
     } else {
       await postToTelegramApi(botToken, 'sendMessage', {
         chat_id: fromChatId,
-        text: `SEND DELETING MESSAGE ERROR! deleteMessageResp: ${JSON.stringify(deleteMessageResp)} message: ${JSON.stringify(message)}.` +
-            `\nYou can send this to developer for getting help, or just delete this message.`,
+        text: `发送删除消息出错！ deleteMessageResp: ${JSON.stringify(deleteMessageResp)} 消息：${JSON.stringify(message)}。` +
+            `\n你可以将此信息发送给开发者寻求帮助，或直接删除此消息。`,
       });
     }
   }
@@ -1022,7 +997,7 @@ export async function processPMDeleteSent(botToken, message, reply, superGroupCh
 
   const checkMessageConnectionMetaDataResp =
       await checkMessageConnectionMetaDataForAction(botToken, superGroupChatId,
-          `Can't find TARGET message for sending message DELETING.`, ownerUid);
+          `无法找到用于发送删除消息的目标消息。`, ownerUid);
   if (checkMessageConnectionMetaDataResp.failed) return;
 
   const messageConnectionTextSplit = checkMessageConnectionMetaDataResp.metaDataMessageText.split(';').reverse();
@@ -1044,7 +1019,7 @@ export async function processPMDeleteSent(botToken, message, reply, superGroupCh
     await postToTelegramApi(botToken, 'sendMessage', {
       chat_id: superGroupChatId,
       message_thread_id: topicId,
-      text: `Can't find TARGET message for sending [message](${originMessageLink}) DELETING\\.`,
+      text: `无法找到用于发送[消息](${originMessageLink})删除的目标消息。`,
       parse_mode: "MarkdownV2",
     });
     return;
@@ -1061,8 +1036,8 @@ export async function processPMDeleteSent(botToken, message, reply, superGroupCh
       await postToTelegramApi(botToken, 'sendMessage', {
         chat_id: superGroupChatId,
         message_thread_id: topicId,
-        text: `SEND DELETING MESSAGE ERROR! deleteMessageResp: ${JSON.stringify(deleteMessageResp)} message: ${JSON.stringify(message)}.` +
-            `\nYou can send this to developer for getting help, or just delete this message.`,
+        text: `发送删除消息出错！ deleteMessageResp: ${JSON.stringify(deleteMessageResp)} 消息：${JSON.stringify(message)}。` +
+            `\n你可以将此信息发送给开发者寻求帮助，或直接删除此消息。`,
       });
     }
   }
@@ -1086,21 +1061,21 @@ async function notifyMessageDeleteForward(botToken, fromChatId, fromMessageId, c
     const sendMessageResp = await (await postToTelegramApi(botToken, 'sendMessage', {
       chat_id: fromChatId,
       message_thread_id: fromTopicId,
-      text: `*[MESSAGE](${originMessageLink}) has been DELETED*\\.` +
-          `These three Message will be deleted after 1s automatically\\.` +
-          `\nOr You can delete the *[ORIGIN MESSAGE](${originMessageLink})*` +
-          ` and *[COMMAND MESSAGE](${commandMessageLink})*` +
-          ` and *\\[THIS MESSAGE\\]* for yourself\\.`,
+      text: `*[消息](${originMessageLink}) 已被删除*\\.` +
+          `这三条消息将在1秒后自动删除。` +
+          `\n你也可以自己删除 *[原始消息](${originMessageLink})*` +
+          ` 和 *[命令消息](${commandMessageLink})*` +
+          ` 以及 *[本消息]*。`,
       parse_mode: "MarkdownV2",
     })).json();
     if (sendMessageResp.ok) {
       await new Promise(resolve => setTimeout(resolve, 1000));
-      // delete origin message
+      // 删除原始消息
       await postToTelegramApi(botToken, 'deleteMessage', {
         chat_id: fromChatId,
         message_id: fromMessageId,
       });
-      // delete command message
+      // 删除命令消息
       await postToTelegramApi(botToken, 'deleteMessage', {
         chat_id: fromChatId,
         message_id: commandMessageId,
@@ -1114,17 +1089,17 @@ async function notifyMessageDeleteForward(botToken, fromChatId, fromMessageId, c
     await postToTelegramApi(botToken, 'sendMessage', {
       chat_id: fromChatId,
       message_thread_id: fromTopicId,
-      text: `*Message has been DELETED*\\.` +
-          `\nYou can delete the *\\[ORIGIN MESSAGE\\]*` +
-          ` and *\\[COMMAND MESSAGE\\]*` +
-          ` and *\\[THIS MESSAGE\\]* for yourself\\.` +
-          ` Limited by TG I can't do it for you, sorry\\.`,
+      text: `*消息已被删除*\\.` +
+          `\n你可以自己删除 *[原始消息]*` +
+          ` 和 *[命令消息]*` +
+          ` 以及 *[本消息]*。` +
+          `受限于 Telegram，我无法为你自动删除，抱歉。`,
       parse_mode: "MarkdownV2",
     });
   }
 }
 
-// ---------------------------------------- BAN TOPIC ----------------------------------------
+// ---------------------------------------- 封禁话题 ----------------------------------------
 
 export async function banTopic(botToken, ownerUid, message, topicToFromChat, metaDataMessage, isSilent) {
   const topicId = message.message_thread_id;
@@ -1136,7 +1111,7 @@ export async function banTopic(botToken, ownerUid, message, topicToFromChat, met
     await postToTelegramApi(botToken, 'sendMessage', {
       chat_id: superGroupChatId,
       message_thread_id: topicId,
-      text: `This topic already been BANNED!`,
+      text: `此话题已经被封禁过了！`,
     });
     return new Response('OK');
   }
@@ -1144,14 +1119,14 @@ export async function banTopic(botToken, ownerUid, message, topicToFromChat, met
   await postToTelegramApi(botToken, 'sendMessage', {
     chat_id: superGroupChatId,
     message_thread_id: topicId,
-    text: `Successfully BAN this topic for receiving private message!`,
+    text: `成功封禁本话题，将不再接收私聊消息！`,
   });
 
   if (isSilent) return new Response('OK');
   const chatId = topicToFromChat.get(topicId)
   await postToTelegramApi(botToken, 'sendMessage', {
     chat_id: chatId,
-    text: `You have been BANNED for sending messages!`,
+    text: `你已被禁止发送消息！`,
   });
   return new Response('OK');
 }
@@ -1166,7 +1141,7 @@ export async function unbanTopic(botToken, ownerUid, message, topicToFromChat, m
     await postToTelegramApi(botToken, 'sendMessage', {
       chat_id: superGroupChatId,
       message_thread_id: topicId,
-      text: `This topic has NOT benn banned!`,
+      text: `此话题并未被封禁！`,
     });
     return new Response('OK');
   }
@@ -1174,19 +1149,19 @@ export async function unbanTopic(botToken, ownerUid, message, topicToFromChat, m
   await postToTelegramApi(botToken, 'sendMessage', {
     chat_id: superGroupChatId,
     message_thread_id: topicId,
-    text: `Successfully UN-BAN this topic for receiving private message!`,
+    text: `成功解封本话题，将恢复接收私聊消息！`,
   });
 
   if (isSilent) return new Response('OK');
   const chatId = topicToFromChat.get(topicId)
   await postToTelegramApi(botToken, 'sendMessage', {
     chat_id: chatId,
-    text: `You have been UN-BANNED for sending messages!`,
+    text: `你已被解除禁止发送消息！`,
   });
   return new Response('OK');
 }
 
-// ---------------------------------------- FIX SETTING ----------------------------------------
+// ---------------------------------------- 修复设置 ----------------------------------------
 
 export async function fixPinMessage(botToken, chatId, text, oldPinMsgId) {
   const sendMessageResp = await (await postToTelegramApi(botToken, 'sendMessage', {
@@ -1205,7 +1180,7 @@ export async function fixPinMessage(botToken, chatId, text, oldPinMsgId) {
   }
 }
 
-// ---------------------------------------- TOPIC COMMENT NAME ----------------------------------------
+// ---------------------------------------- 话题评论名称编辑 ----------------------------------------
 
 export async function processTopicCommentNameEdit(botToken, ownerUid, topicId, fromChatId, newTotalName, metaDataMessage) {
   if (!newTotalName) return;
